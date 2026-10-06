@@ -44,4 +44,3 @@ class DatabaseManager:
 
 
 db = DatabaseManager(settings.database_url)
-
