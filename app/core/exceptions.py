@@ -1,3 +1,4 @@
+from starlette import status
 class AppException(Exception):
     status_code: int = 500
 
@@ -7,15 +8,15 @@ class AppException(Exception):
 
 
 class UserAlreadyExistsError(AppException):
-    status_code = 409
+    status_code = status.HTTP_409_CONFLICT
 
 
 class UserNotFoundError(AppException):
-    status_code = 404
+    status_code = status.HTTP_404_NOT_FOUND
 
 
 class InvalidCredentialsError(AppException):
-    status_code = 401
+    status_code = status.HTTP_401_UNAUTHORIZED
 
 
 from fastapi import Request
