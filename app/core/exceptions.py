@@ -2,13 +2,14 @@ from starlette import status
 class AppException(Exception):
     status_code: int = 500
 
-    def __init__(self, message: str):
-        self.message = message
+    def __init__(self, message: str | None = None):
+        self.message = message or self.message
         super().__init__(message)
 
 
 class UserAlreadyExistsError(AppException):
     status_code = status.HTTP_409_CONFLICT
+    message = "User Already Registered"
 
 
 class UserNotFoundError(AppException):

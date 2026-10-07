@@ -20,7 +20,7 @@ class UserService:
         existing_user = self._repository.get_by_email(user.email)
 
         if existing_user is not None:
-            raise UserAlreadyExistsError("User already registered")
+            raise UserAlreadyExistsError()
 
         new_user = User(
             username=user.username,
