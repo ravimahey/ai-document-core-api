@@ -3,7 +3,7 @@ import bcrypt
 from app.models import User
 from app.repositories.user import UserRepository
 from app.schemas.user import CreateUser
-from app.core.exceptions import UserAlreadyExistsError
+from app.core.exceptions import UserAlreadyExistsError, UserNotFoundError
 
 
 class UserService:
@@ -15,6 +15,9 @@ class UserService:
         salt = bcrypt.gensalt()
         hashed_password = bcrypt.hashpw(password, salt)
         return hashed_password
+
+    def _verify_password(self, password: str, hashed_password):
+        return bcrypt.checkpw(password.encode("utf-8"), hashed_password=hashed_password)
 
     def register_user(self, user: CreateUser) -> User:
         existing_user = self._repository.get_by_email(user.email)
@@ -38,3 +41,10 @@ class UserService:
 
     def get_all(self) -> list[User]:
         return self._repository.get_all()
+
+    def get_user_by_email(self, email: str):
+        user = self.get_user_by_email(email=email)
+        if user is None:
+            raise UserNotFoundError()
+
+        return user

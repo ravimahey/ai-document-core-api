@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from fastapi import Depends
 from typing import Annotated
 from app.services.user import UserService, UserRepository
+from app.services.auth import AuthService
 from app.db.session import SessionLocal
 
 
@@ -33,3 +34,10 @@ def get_user_service(db: DbSession, repository: UserRepositoryDep) -> UserServic
 
 
 UserServiceDep = Annotated[UserService, Depends(get_user_service)]
+
+
+def get_auth_service(db: DbSession, user_service: UserServiceDep) -> AuthService:
+    return AuthService(db=db, user_service=user_service)
+
+
+AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]

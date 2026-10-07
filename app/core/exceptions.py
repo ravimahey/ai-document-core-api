@@ -1,4 +1,6 @@
 from starlette import status
+
+
 class AppException(Exception):
     status_code: int = 500
 
@@ -14,6 +16,7 @@ class UserAlreadyExistsError(AppException):
 
 class UserNotFoundError(AppException):
     status_code = status.HTTP_404_NOT_FOUND
+    message = "User Not Found"
 
 
 class InvalidCredentialsError(AppException):
