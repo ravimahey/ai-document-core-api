@@ -1,10 +1,10 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 
 
 class CreateUser(BaseModel):
     username: str
     email: str
-    hashed_password: str
+    password: str
     full_name: str
     is_serperuser: bool
 
@@ -15,3 +15,4 @@ class UserResponse(BaseModel):
     full_name: str
     is_active: bool
     is_superuser: bool
+    model_config = ConfigDict(from_attributes=True)

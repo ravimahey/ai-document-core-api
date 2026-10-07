@@ -25,7 +25,7 @@ class UserService:
         new_user = User(
             username=user.username,
             email=user.email,
-            hashed_password=self._hash_password(user.hashed_password.encode("utf-8")),
+            hashed_password=self._hash_password(user.password.encode("utf-8")),
             full_name=user.full_name,
         )
 
@@ -33,6 +33,8 @@ class UserService:
 
         self._db.commit()
         self._db.refresh(new_user)
+
+        return new_user
 
     def get_all(self) -> list[User]:
         return self._repository.get_all()

@@ -2,11 +2,13 @@ from fastapi import APIRouter, HTTPException
 from app.api.deps import UserServiceDep
 from app.schemas.user import CreateUser
 from starlette import status
+from app.schemas.user import UserResponse
+
 
 user_router = APIRouter()
 
 
-@user_router.get("/user")
+@user_router.get("/user", response_model=list[UserResponse])
 def get_users(user: UserServiceDep):
     try:
         get_users = user.get_all()
@@ -18,6 +20,6 @@ def get_users(user: UserServiceDep):
         ) from exc
 
 
-@user_router.post("/register")
+@user_router.post("/register", response_model=UserResponse)
 def register_user(user: UserServiceDep, new_user: CreateUser):
     return user.register_user(user=new_user)
