@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from app.api.deps import UserServiceDep
 from app.schemas.user import CreateUser
 from starlette import status
+
 user_router = APIRouter()
 
 
