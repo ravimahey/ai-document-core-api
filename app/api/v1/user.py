@@ -1,25 +1,16 @@
 from fastapi import APIRouter, HTTPException
-from app.api.deps import UserServiceDep
+from app.api.deps import UserServiceDep, CurrentActiveUserDep
 from app.schemas.user import CreateUser
-from starlette import status
 from app.schemas.user import UserResponse
 
-
-user_router = APIRouter()
+user_router = APIRouter(tags=["User APIs"])
 
 
 @user_router.get("/user", response_model=list[UserResponse])
-def get_users(user: UserServiceDep):
-    try:
-        get_users = user.get_all()
-        return get_users
-    except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Failed to retrieve users",
-        ) from exc
+def get_users(user: UserServiceDep, current_user: CurrentActiveUserDep):
+    get_users = user.get_all()
 
 
 @user_router.post("/register", response_model=UserResponse)
-def register_user(user: UserServiceDep, new_user: CreateUser):
-    return user.register_user(user=new_user)
+def register_user(current_user: CurrentActiveUserDep, new_user: CreateUser):
+    return current_user.register_user(user=new_user)

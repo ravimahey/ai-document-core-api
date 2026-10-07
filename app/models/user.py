@@ -46,3 +46,4 @@ class User(Base):
         default=False,
         nullable=False,
     )
+    role: Mapped[str] = mapped_column(String(10), default="admin", nullable=True)

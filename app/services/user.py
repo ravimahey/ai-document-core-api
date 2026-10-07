@@ -42,9 +42,8 @@ class UserService:
     def get_all(self) -> list[User]:
         return self._repository.get_all()
 
-    def get_user_by_email(self, email: str):
-        user = self.get_user_by_email(email=email)
+    def get_user_by_email(self, email: str) -> User:
+        user = self._repository.get_by_email(email=email)
         if user is None:
             raise UserNotFoundError()
-
         return user

@@ -7,6 +7,7 @@ class CreateUser(BaseModel):
     password: str
     full_name: str
     is_serperuser: bool
+    role: str
 
 
 class UserResponse(BaseModel):
@@ -15,4 +16,5 @@ class UserResponse(BaseModel):
     full_name: str
     is_active: bool
     is_superuser: bool
+    role: str | None
     model_config = ConfigDict(from_attributes=True)
