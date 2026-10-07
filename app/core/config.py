@@ -26,6 +26,14 @@ class Settings(BaseSettings):
 
     database_url: str = "sqlite:///./db/todo.db"
     db_echo: bool = False
+    jwt_algorithm: Literal["RS256", "ES256"] = "RS256"   # symmetric HS* is deliberately not allowed
+    jwt_private_key: str      # no default: fail fast if missing
+    jwt_public_key: str
+    jwt_key_id: str = "user"
+    jwt_issuer: str = "user"
+    jwt_audience: str = "user, ai"
+    access_token_expire_minutes: int = 15
+    refresh_token_expire_days: int = 7
 
 
 @lru_cache
