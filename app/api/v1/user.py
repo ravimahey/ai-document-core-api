@@ -20,11 +20,3 @@ def get_current_user_profile(
     current_user: CurrentActiveUserDep,
 ) -> User:
     return current_user
-
-
-@user_router.post("/register", response_model=UserResponse)
-def register_user(
-    user_service: UserServiceDep,
-    new_user: CreateUser,
-) -> User:
-    return user_service.register_user(user=new_user)

@@ -7,7 +7,7 @@ from app.core.config import Settings, get_settings
 from app.core.exceptions import InvalidCredentialsError, UserNotFoundError
 from app.core.security import verify_password
 from app.schemas.auth import Token
-from app.services.user import UserService   
+from app.services.user import UserService
 
 
 class AuthService:

@@ -36,6 +36,65 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 7
 
+    # OTP Configuration
+    otp_expire_minutes: int = 5
+    otp_length: int = 6
+    otp_max_attempts: int = 5
+    otp_resend_cooldown_seconds: int = 60
+    otp_max_requests_per_hour: int = 10
+    otp_secret_key: str = Field(
+        default="default-insecure-otp-secret-key-change-in-production"
+    )
+
+    # Email Service Configuration
+    email_provider: Literal["console", "smtp", "mock"] = "console"
+    smtp_host: str = "smtp.example.com"
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_from_email: str = "noreply@documentanalysis.ai"
+    smtp_use_tls: bool = True
+
+    # Chatbot & LLM Configuration (OpenAI / LangChain)
+    openai_api_key: str = Field(default="")
+    openai_model: str = "gpt-4.1-nano"
+    openai_temperature: float = 0.7
+    openai_max_output_tokens: int = 2048
+    chat_max_input_characters: int = 4000
+    chat_history_message_limit: int = 20
+    chat_request_timeout_seconds: float = 30.0
+    chat_system_prompt: str = (
+        "You are a helpful, respectful, and concise AI assistant."
+    )
+
+    # Object Storage Configuration (MinIO / Amazon S3 / Local)
+    object_storage_provider: Literal["minio", "s3", "local"] = "minio"
+    minio_endpoint_url: str = "http://localhost:9000"
+    minio_access_key: str = "minioadmin"
+    minio_secret_key: str = "minioadmin"
+    minio_bucket_name: str = "documents"
+    minio_region: str = "us-east-1"
+    minio_secure: bool = False
+
+    aws_access_key_id: str | None = None
+    aws_secret_access_key: str | None = None
+    aws_region: str = "us-east-1"
+    aws_s3_bucket_name: str = "documents"
+
+    local_storage_path: str = "./data/storage"
+
+    # Celery & Redis Configuration
+    celery_broker_url: str = "redis://localhost:6379/0"
+    celery_result_backend: str = "redis://localhost:6379/1"
+    celery_task_always_eager: bool = False
+
+    # Document Ingestion, Chunking & Embeddings
+    max_upload_size_bytes: int = 25 * 1024 * 1024  # 25 MB
+    embedding_model: str = "text-embedding-3-small"
+    chunk_size: int = 1000
+    chunk_overlap: int = 150
+    faiss_index_dir: str = "./data/faiss_indexes"
+
 
 @lru_cache
 def get_settings() -> Settings:

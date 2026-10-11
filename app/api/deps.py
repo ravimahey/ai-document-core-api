@@ -9,8 +9,14 @@ from app.core.config import get_settings
 from app.core.exceptions import AppException
 from app.db.session import SessionLocal
 from app.models.user import User
+from app.repositories.chat import ChatRepository
+from app.repositories.otp import OTPRepository
 from app.repositories.user import UserRepository
 from app.services.auth import AuthService
+from app.services.chat import ChatService
+from app.services.email import BaseEmailService, get_email_service
+from app.services.llm import BaseLLMService, get_llm_service
+from app.services.otp import OTPService
 from app.services.user import UserService
 
 settings = get_settings()
@@ -50,6 +56,68 @@ def get_auth_service(user_service: UserServiceDep) -> AuthService:
 
 
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
+
+
+def get_email_service_dep() -> BaseEmailService:
+    return get_email_service()
+
+
+EmailServiceDep = Annotated[BaseEmailService, Depends(get_email_service_dep)]
+
+
+def get_otp_repository(db: DbSession) -> OTPRepository:
+    return OTPRepository(db)
+
+
+OTPRepositoryDep = Annotated[OTPRepository, Depends(get_otp_repository)]
+
+
+def get_otp_service(
+    db: DbSession,
+    otp_repository: OTPRepositoryDep,
+    user_repository: UserRepositoryDep,
+    auth_service: AuthServiceDep,
+    email_service: EmailServiceDep,
+) -> OTPService:
+    return OTPService(
+        db=db,
+        otp_repository=otp_repository,
+        user_repository=user_repository,
+        auth_service=auth_service,
+        email_service=email_service,
+    )
+
+
+OTPServiceDep = Annotated[OTPService, Depends(get_otp_service)]
+
+
+def get_llm_service_dep() -> BaseLLMService:
+    return get_llm_service()
+
+
+LLMServiceDep = Annotated[BaseLLMService, Depends(get_llm_service_dep)]
+
+
+def get_chat_repository(db: DbSession) -> ChatRepository:
+    return ChatRepository(db)
+
+
+ChatRepositoryDep = Annotated[ChatRepository, Depends(get_chat_repository)]
+
+
+def get_chat_service(
+    db: DbSession,
+    chat_repository: ChatRepositoryDep,
+    llm_service: LLMServiceDep,
+) -> ChatService:
+    return ChatService(
+        db=db,
+        chat_repository=chat_repository,
+        llm_service=llm_service,
+    )
+
+
+ChatServiceDep = Annotated[ChatService, Depends(get_chat_service)]
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.api_v1_prefix}/token")
 
