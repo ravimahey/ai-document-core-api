@@ -10,14 +10,18 @@ from app.core.exceptions import AppException
 from app.db.session import SessionLocal
 from app.models.user import User
 from app.repositories.chat import ChatRepository
+from app.repositories.document import DocumentRepository
 from app.repositories.otp import OTPRepository
 from app.repositories.user import UserRepository
 from app.services.auth import AuthService
 from app.services.chat import ChatService
+from app.services.document import DocumentService
 from app.services.email import BaseEmailService, get_email_service
 from app.services.llm import BaseLLMService, get_llm_service
 from app.services.otp import OTPService
+from app.services.storage import BaseStorageService, get_storage_service
 from app.services.user import UserService
+from app.services.vector_store import FAISSService, get_faiss_service
 
 settings = get_settings()
 
@@ -118,6 +122,44 @@ def get_chat_service(
 
 
 ChatServiceDep = Annotated[ChatService, Depends(get_chat_service)]
+
+
+def get_storage_service_dep() -> BaseStorageService:
+    return get_storage_service()
+
+
+StorageServiceDep = Annotated[BaseStorageService, Depends(get_storage_service_dep)]
+
+
+def get_faiss_service_dep() -> FAISSService:
+    return get_faiss_service()
+
+
+FAISSServiceDep = Annotated[FAISSService, Depends(get_faiss_service_dep)]
+
+
+def get_document_repository(db: DbSession) -> DocumentRepository:
+    return DocumentRepository(db)
+
+
+DocumentRepositoryDep = Annotated[DocumentRepository, Depends(get_document_repository)]
+
+
+def get_document_service(
+    db: DbSession,
+    document_repository: DocumentRepositoryDep,
+    storage_service: StorageServiceDep,
+    faiss_service: FAISSServiceDep,
+) -> DocumentService:
+    return DocumentService(
+        db=db,
+        document_repository=document_repository,
+        storage_service=storage_service,
+        faiss_service=faiss_service,
+    )
+
+
+DocumentServiceDep = Annotated[DocumentService, Depends(get_document_service)]
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.api_v1_prefix}/token")
 

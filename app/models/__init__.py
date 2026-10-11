@@ -1,5 +1,6 @@
 from app.models.chat import Conversation, Message
+from app.models.document import Document
 from app.models.otp import OTPChallenge
 from app.models.user import User
 
-__all__ = ["Conversation", "Message", "OTPChallenge", "User"]
+__all__ = ["Conversation", "Document", "Message", "OTPChallenge", "User"]

@@ -98,6 +98,52 @@ class LLMAuthenticationError(AppException):
     message = "AI service authentication failed. Check server configuration."
 
 
+# Document & Storage Exceptions
+class DocumentNotFoundError(AppException):
+    status_code = status.HTTP_404_NOT_FOUND
+    message = "Document not found."
+
+
+class DocumentAccessDeniedError(AppException):
+    status_code = status.HTTP_403_FORBIDDEN
+    message = "You do not have permission to access this document."
+
+
+class InvalidFileTypeError(AppException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    message = "Unsupported file type. Supported formats: .pdf, .docx, .txt, .md."
+
+
+class FileTooLargeError(AppException):
+    status_code = status.HTTP_413_CONTENT_TOO_LARGE
+    message = "Uploaded file exceeds maximum allowed size."
+
+
+class EmptyDocumentError(AppException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    message = "The document contains no readable text."
+
+
+class StorageError(AppException):
+    status_code = status.HTTP_502_BAD_GATEWAY
+    message = "Object storage operation failed."
+
+
+class StorageNotFoundError(AppException):
+    status_code = status.HTTP_404_NOT_FOUND
+    message = "Object not found in storage."
+
+
+class DocumentProcessingBusyError(AppException):
+    status_code = status.HTTP_409_CONFLICT
+    message = "Document is currently being processed."
+
+
+class DocumentNotEligibleForRetryError(AppException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    message = "Only documents in 'failed' status can be retried."
+
+
 async def app_exception_handler(
     request: Request,
     exc: AppException,
