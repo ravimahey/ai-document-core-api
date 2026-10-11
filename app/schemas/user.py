@@ -1,20 +1,22 @@
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 
 class CreateUser(BaseModel):
     username: str
-    email: str
+    email: EmailStr
     password: str
-    full_name: str
-    is_serperuser: bool
-    role: str
+    full_name: str | None = None
+    is_superuser: bool = False
+    role: str = "user"
 
 
 class UserResponse(BaseModel):
+    id: int | None = None
     username: str
     email: EmailStr
-    full_name: str
+    full_name: str | None = None
     is_active: bool
     is_superuser: bool
-    role: str | None
+    role: str | None = None
+
     model_config = ConfigDict(from_attributes=True)

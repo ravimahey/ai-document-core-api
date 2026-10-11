@@ -1,15 +1,22 @@
 from collections.abc import Generator
-from sqlalchemy.orm import Session
-from fastapi import Depends, HTTPException
 from typing import Annotated
-from app.services.user import UserService, UserRepository
-from app.services.auth import AuthService
-from app.db.session import SessionLocal
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from app.schemas.auth  import User
-from starlette import status
 
-def get_db() -> Generator[Session, None, None]:
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
+
+from app.core.config import get_settings
+from app.core.exceptions import AppException
+from app.db.session import SessionLocal
+from app.models.user import User
+from app.repositories.user import UserRepository
+from app.services.auth import AuthService
+from app.services.user import UserService
+
+settings = get_settings()
+
+
+def get_db() -> Generator[Session]:
     """One session per request; always closed, rolled back on error."""
     db = SessionLocal()
     try:
@@ -44,25 +51,41 @@ def get_auth_service(user_service: UserServiceDep) -> AuthService:
 
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.api_v1_prefix}/token")
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-# oauth2Dep = Annotated[OAuth2PasswordRequestForm, Depends()]
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
-    user = AuthServiceDep.decode_token(token)
-    if not user:
+async def get_current_user(
+    token: Annotated[str, Depends(oauth2_scheme)],
+    auth_service: AuthServiceDep,
+    user_service: UserServiceDep,
+) -> User:
+    try:
+        payload = auth_service.decode_token(token)
+        email = payload.get("email")
+        if not email:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        user = user_service.get_user_by_email(email)
+        return user
+    except AppException:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
+            detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return user
+
 
 async def get_current_active_user(
     current_user: Annotated[User, Depends(get_current_user)],
-):
-    if current_user.disabled:
-        raise HTTPException(status_code=400, detail="Inactive user")
+) -> User:
+    if not current_user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Inactive user",
+        )
     return current_user
 
 

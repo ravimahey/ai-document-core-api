@@ -8,9 +8,10 @@ class LoginForm(BaseModel):
 
 
 class PayloadForJWT(BaseModel):
+    sub: str
     username: str
     email: EmailStr
-    role: str
+    role: str | None = None
 
 
 class Token(BaseModel):
@@ -19,6 +20,8 @@ class Token(BaseModel):
 
 
 class User(BaseModel):
+    id: int | None = None
     username: str
     email: EmailStr
-    role: str
+    is_active: bool = True
+    role: str | None = None

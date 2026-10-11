@@ -1,9 +1,10 @@
 from sqlalchemy.orm import Session
-import bcrypt
-from app.models import User
+
+from app.core.exceptions import UserAlreadyExistsError, UserNotFoundError
+from app.core.security import get_password_hash
+from app.models.user import User
 from app.repositories.user import UserRepository
 from app.schemas.user import CreateUser
-from app.core.exceptions import UserAlreadyExistsError, UserNotFoundError
 
 
 class UserService:
@@ -11,29 +12,23 @@ class UserService:
         self._db = db
         self._repository = repository
 
-    def _hash_password(self, password: str):
-        salt = bcrypt.gensalt()
-        hashed_password = bcrypt.hashpw(password, salt)
-        return hashed_password
-
-    def _verify_password(self, password: str, hashed_password):
-        return bcrypt.checkpw(password.encode("utf-8"), hashed_password=hashed_password)
-
     def register_user(self, user: CreateUser) -> User:
-        existing_user = self._repository.get_by_email(user.email)
+        if self._repository.get_by_email(str(user.email)) is not None:
+            raise UserAlreadyExistsError("A user with this email already exists.")
 
-        if existing_user is not None:
-            raise UserAlreadyExistsError()
+        if self._repository.get_by_username(user.username) is not None:
+            raise UserAlreadyExistsError("A user with this username already exists.")
 
         new_user = User(
             username=user.username,
-            email=user.email,
-            hashed_password=self._hash_password(user.password.encode("utf-8")),
+            email=str(user.email),
+            hashed_password=get_password_hash(user.password),
             full_name=user.full_name,
+            is_superuser=user.is_superuser,
+            role=user.role,
         )
 
         self._repository.add(new_user)
-
         self._db.commit()
         self._db.refresh(new_user)
 
@@ -42,8 +37,26 @@ class UserService:
     def get_all(self) -> list[User]:
         return self._repository.get_all()
 
+    def get_user_by_id(self, user_id: int) -> User:
+        user = self._repository.get_by_id(user_id)
+        if user is None:
+            raise UserNotFoundError()
+        return user
+
     def get_user_by_email(self, email: str) -> User:
         user = self._repository.get_by_email(email=email)
+        if user is None:
+            raise UserNotFoundError()
+        return user
+
+    def get_user_by_username(self, username: str) -> User:
+        user = self._repository.get_by_username(username=username)
+        if user is None:
+            raise UserNotFoundError()
+        return user
+
+    def get_user_by_email_or_username(self, identifier: str) -> User:
+        user = self._repository.get_by_email_or_username(identifier=identifier)
         if user is None:
             raise UserNotFoundError()
         return user

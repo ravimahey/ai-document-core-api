@@ -1,16 +1,30 @@
-from fastapi import APIRouter, HTTPException
-from app.api.deps import UserServiceDep, CurrentActiveUserDep
-from app.schemas.user import CreateUser
-from app.schemas.user import UserResponse
+from fastapi import APIRouter
+
+from app.api.deps import CurrentActiveUserDep, UserServiceDep
+from app.models.user import User
+from app.schemas.user import CreateUser, UserResponse
 
 user_router = APIRouter(tags=["User APIs"])
 
 
 @user_router.get("/user", response_model=list[UserResponse])
-def get_users(user: UserServiceDep, current_user: CurrentActiveUserDep):
-    get_users = user.get_all()
+def get_users(
+    user_service: UserServiceDep,
+    current_user: CurrentActiveUserDep,
+) -> list[User]:
+    return user_service.get_all()
+
+
+@user_router.get("/me", response_model=UserResponse)
+def get_current_user_profile(
+    current_user: CurrentActiveUserDep,
+) -> User:
+    return current_user
 
 
 @user_router.post("/register", response_model=UserResponse)
-def register_user(current_user: CurrentActiveUserDep, new_user: CreateUser):
-    return current_user.register_user(user=new_user)
+def register_user(
+    user_service: UserServiceDep,
+    new_user: CreateUser,
+) -> User:
+    return user_service.register_user(user=new_user)

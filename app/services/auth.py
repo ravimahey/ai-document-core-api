@@ -1,47 +1,74 @@
-from app.schemas.auth import LoginForm
-from app.services.user import UserService
-from app.schemas.auth import Token, PayloadForJWT
-from app.core.config import get_settings
-from datetime import timedelta, datetime
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
-settings = get_settings()
 import jwt
+
+from app.core.config import Settings, get_settings
+from app.core.exceptions import InvalidCredentialsError, UserNotFoundError
+from app.core.security import verify_password
+from app.schemas.auth import Token
+from app.services.user import UserService   
 
 
 class AuthService:
-    def __init__(self, user_service: UserService):
+    def __init__(self, user_service: UserService, settings: Settings | None = None):
         self._user_service = user_service
+        self._settings = settings or get_settings()
 
-    def login(self, email: str, password: str):
-        user = self._user_service.get_user_by_email(email=email)
-        check_password = self._user_service._verify_password(
-            password, user.hashed_password
+    def _get_audiences(self) -> list[str]:
+        return [
+            a.strip()
+            for a in self._settings.jwt_audience.replace(",", " ").split()
+            if a.strip()
+        ]
+
+    def login(self, email_or_username: str, password: str) -> Token:
+        try:
+            user = self._user_service.get_user_by_email_or_username(email_or_username)
+        except UserNotFoundError:
+            raise InvalidCredentialsError()
+
+        if not verify_password(password, user.hashed_password):
+            raise InvalidCredentialsError()
+
+        payload = {
+            "sub": str(user.id),
+            "username": user.username,
+            "email": user.email,
+            "role": user.role,
+        }
+
+        access_token = self.create_token(payload)
+        return Token(access_token=access_token, token_type="bearer")
+
+    def create_token(self, payload: dict[str, Any]) -> str:
+        expiry = datetime.now(UTC) + timedelta(
+            minutes=self._settings.access_token_expire_minutes
         )
-        if True:
-            payload = PayloadForJWT(
-                email=user.email, username=user.username, role=user.role
-            )
+        audiences = self._get_audiences()
 
-            token = Token(
-                access_token=self.create_token(payload.model_dump()),
-                token_type="barear",
-            )
-
-            return token
-
-    def create_token(self, payload):
-        expiry = datetime.now() + timedelta(settings.access_token_expire_minutes)
         claim = {
-            "sub": payload,
-            "iss": settings.jwt_issuer,
-            "aud": settings.jwt_audience.split(),
+            **payload,
+            "iss": self._settings.jwt_issuer,
+            "aud": audiences,
             "exp": expiry,
         }
-        token = jwt.encode(
-            claim, settings.jwt_private_key, algorithm=settings.jwt_algorithm
+        return jwt.encode(
+            claim,
+            self._settings.jwt_private_key,
+            algorithm=self._settings.jwt_algorithm,
         )
-        return token
 
-    def decode_token(self, token: str):
-        user = jwt.decode(token,settings.jwt_public_key, algorithms=['RS256'], audience='user')
-        return user        
+    def decode_token(self, token: str) -> dict[str, Any]:
+        audiences = self._get_audiences()
+        try:
+            decoded = jwt.decode(
+                token,
+                self._settings.jwt_public_key,
+                algorithms=[self._settings.jwt_algorithm],
+                audience=audiences if audiences else None,
+                issuer=self._settings.jwt_issuer,
+            )
+            return decoded
+        except jwt.PyJWTError as exc:
+            raise InvalidCredentialsError("Could not validate credentials") from exc
