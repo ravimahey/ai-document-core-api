@@ -168,8 +168,10 @@ def send_message(
         content=payload.content,
     )
 
+    assistant_msg_response = MessageResponse.model_validate(assistant_msg)
     return ChatExchangeResponse(
         conversation_id=conversation_id,
         user_message=MessageResponse.model_validate(user_msg),
-        assistant_message=MessageResponse.model_validate(assistant_msg),
+        assistant_message=assistant_msg_response,
+        sources=assistant_msg_response.sources,
     )

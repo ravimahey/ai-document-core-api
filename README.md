@@ -45,15 +45,19 @@ The application adheres to a clean layered architecture:
 - **Lifecycle & Cleanup**: Deleting a document removes the object from storage, purges the vectors from the user's FAISS index, and deletes database metadata.
 - **Retry Mechanism**: Resilient recovery for failed ingestion jobs via a dedicated retry endpoint with exponential backoff on transient errors.
 
-### 2. Conversational AI Chatbot (LangChain & OpenAI)
+### 2. Conversational AI Chatbot & RAG Knowledge Base Integration
+- **Document-Grounded Question Answering (RAG)**: Chat conversations automatically search the authenticated user's processed documents in FAISS and inject relevant excerpts into the prompt to generate grounded answers.
+- **Strict User & Document Isolation**: Retrieval strictly isolates vectors per user (`user_{user_id}`) and validates against the database so only `completed` documents owned by the user are ever accessible.
+- **Source Citations**: Returns detailed source references with each answer (`document_id`, `filename`, `page`, `chunk_index`, `excerpt`, and `score`), persisted alongside the assistant message.
+- **Prompt Injection Defense**: Treats all retrieved context strictly as untrusted reference data, explicitly directing the model not to execute instructions embedded inside uploaded files.
+- **Follow-Up Query Awareness**: Detects conversational follow-up questions and combines relevant context to ensure continuity in multi-turn document exploration.
 - **ChatGPT-like Thread Management**: Create, list, paginate, continue, rename, and delete independent conversation threads.
 - **Context Window Management**: Dynamically loads the most recent `N` messages (configurable via `CHAT_HISTORY_MESSAGE_LIMIT`) to maintain conversation context within cost and token limits.
 - **Cheapest Suitable OpenAI Model**: Configured with `gpt-4.1-nano` (or `gpt-4o-mini`), fully customizable via the `OPENAI_MODEL` environment variable.
 - **Zero Orphan Messages**: If OpenAI or network calls fail or time out, user messages are not left orphaned in the database, avoiding duplicate messages on retry.
-- **User Data Isolation**: Strict ownership enforcement prevents any user from accessing, continuing, renaming, or deleting another user's conversation threads.
 - **Interactive Web Interface**: A self-contained, responsive chat UI served at `/chat` featuring a conversation sidebar, auto-scroll, loading indicators, token metadata, and authentication integration.
 
-### 2. User Authentication & Verification
+### 3. User Authentication & Verification
 - **Email OTP-based Registration**: Validates email and username uniqueness, hashes passwords immediately, delivers a 6-digit verification code, and activates the user account upon single-use verification.
 - **Passwordless Email OTP Login**: Issues single-use login codes with anti-enumeration protection and returns standard RS256 JWT access tokens.
 - **Password-Based OAuth2 Login**: Preserved for legacy and programmatic clients via `/api/v1/token`.
@@ -172,8 +176,13 @@ CELERY_TASK_ALWAYS_EAGER=false          # Set true for testing synchronous execu
 MAX_UPLOAD_SIZE_BYTES=26214400          # 25 MB max upload limit
 EMBEDDING_MODEL="text-embedding-3-small"
 CHUNK_SIZE=1000
-CHUNK_OVERLAP=150
 FAISS_INDEX_DIR="./data/faiss_indexes"
+
+# Retrieval-Augmented Generation (RAG)
+RAG_ENABLED=true
+RAG_TOP_K=5
+# RAG_SIMILARITY_THRESHOLD=1.2
+RAG_MAX_CONTEXT_CHARACTERS=6000
 ```
 
 ### How to Obtain an OpenAI API Key

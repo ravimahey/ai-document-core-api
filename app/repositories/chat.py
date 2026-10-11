@@ -70,6 +70,7 @@ class ChatRepository:
         prompt_tokens: int | None = None,
         completion_tokens: int | None = None,
         total_tokens: int | None = None,
+        sources_json: str | None = None,
     ) -> Message:
         message = Message(
             conversation_id=conversation_id,
@@ -79,6 +80,7 @@ class ChatRepository:
             prompt_tokens=prompt_tokens,
             completion_tokens=completion_tokens,
             total_tokens=total_tokens,
+            sources_json=sources_json,
             created_at=datetime.now(timezone.utc),
         )
         self._db.add(message)

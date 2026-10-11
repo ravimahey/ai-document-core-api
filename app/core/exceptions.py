@@ -144,6 +144,11 @@ class DocumentNotEligibleForRetryError(AppException):
     message = "Only documents in 'failed' status can be retried."
 
 
+class EmbeddingModelMismatchError(AppException):
+    status_code = status.HTTP_400_BAD_REQUEST
+    message = "Embedding model mismatch between configured model and document vector index."
+
+
 async def app_exception_handler(
     request: Request,
     exc: AppException,

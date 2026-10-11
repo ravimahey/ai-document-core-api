@@ -90,12 +90,28 @@ class Message(Base):
         Integer,
         nullable=True,
     )
+    sources_json: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         index=True,
         nullable=False,
     )
+
+    @property
+    def sources(self) -> list[dict]:
+        import json
+
+        if not self.sources_json:
+            return []
+        try:
+            parsed = json.loads(self.sources_json)
+            return parsed if isinstance(parsed, list) else []
+        except Exception:
+            return []
 
     # Relationship
     conversation: Mapped["Conversation"] = relationship(

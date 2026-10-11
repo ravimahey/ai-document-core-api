@@ -1,6 +1,15 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
+
+
+class SourceCitation(BaseModel):
+    document_id: int
+    filename: str
+    page: int | None = None
+    chunk_index: int | None = None
+    excerpt: str | None = None
+    score: float | None = None
 
 
 class MessageResponse(BaseModel):
@@ -12,6 +21,7 @@ class MessageResponse(BaseModel):
     prompt_tokens: int | None = None
     completion_tokens: int | None = None
     total_tokens: int | None = None
+    sources: list[SourceCitation] = Field(default_factory=list)
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -63,6 +73,12 @@ class ChatExchangeResponse(BaseModel):
     conversation_id: int
     user_message: MessageResponse
     assistant_message: MessageResponse
+    sources: list[SourceCitation] = Field(default_factory=list)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def message(self) -> MessageResponse:
+        return self.assistant_message
 
 
 class ConversationListResponse(BaseModel):

@@ -19,6 +19,7 @@ from app.services.document import DocumentService
 from app.services.email import BaseEmailService, get_email_service
 from app.services.llm import BaseLLMService, get_llm_service
 from app.services.otp import OTPService
+from app.services.retrieval import RetrievalService
 from app.services.storage import BaseStorageService, get_storage_service
 from app.services.user import UserService
 from app.services.vector_store import FAISSService, get_faiss_service
@@ -109,21 +110,6 @@ def get_chat_repository(db: DbSession) -> ChatRepository:
 ChatRepositoryDep = Annotated[ChatRepository, Depends(get_chat_repository)]
 
 
-def get_chat_service(
-    db: DbSession,
-    chat_repository: ChatRepositoryDep,
-    llm_service: LLMServiceDep,
-) -> ChatService:
-    return ChatService(
-        db=db,
-        chat_repository=chat_repository,
-        llm_service=llm_service,
-    )
-
-
-ChatServiceDep = Annotated[ChatService, Depends(get_chat_service)]
-
-
 def get_storage_service_dep() -> BaseStorageService:
     return get_storage_service()
 
@@ -136,6 +122,33 @@ def get_faiss_service_dep() -> FAISSService:
 
 
 FAISSServiceDep = Annotated[FAISSService, Depends(get_faiss_service_dep)]
+
+
+def get_retrieval_service(
+    db: DbSession,
+    faiss_service: FAISSServiceDep,
+) -> RetrievalService:
+    return RetrievalService(db=db, faiss_service=faiss_service)
+
+
+RetrievalServiceDep = Annotated[RetrievalService, Depends(get_retrieval_service)]
+
+
+def get_chat_service(
+    db: DbSession,
+    chat_repository: ChatRepositoryDep,
+    llm_service: LLMServiceDep,
+    retrieval_service: RetrievalServiceDep,
+) -> ChatService:
+    return ChatService(
+        db=db,
+        chat_repository=chat_repository,
+        llm_service=llm_service,
+        retrieval_service=retrieval_service,
+    )
+
+
+ChatServiceDep = Annotated[ChatService, Depends(get_chat_service)]
 
 
 def get_document_repository(db: DbSession) -> DocumentRepository:
